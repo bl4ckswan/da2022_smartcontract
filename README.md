@@ -34,3 +34,8 @@ npx hardhat run scripts/deploy.js --network localhost
 npm start
 ```
 # DA2022_new
+
+**Trong quá trình chạy nếu xảy ra lỗi cần đảm bảo:
+  - thay đổi dns sang 1.1.1.1
+  - kiểm tra file .env.local 
+**
