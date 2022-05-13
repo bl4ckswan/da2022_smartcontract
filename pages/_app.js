@@ -71,10 +71,10 @@ function MyApp({ Component, pageProps }) {
             )
           }
           {
-             (account === ownerAddress) && (<p className={accountInfo}>Role:Admin - Addr:  {account}</p>)
+             (account === ownerAddress) && (<p className={accountInfo}>VAI TRÒ:Quản trị hệ thống - Addr:  {account}</p>)
           }
           {
-            account && <p className={accountInfo}>Role:User - Addr: {account}</p>
+            account && (account !== ownerAddress ) && <p className={accountInfo}>VAI TRÒ:Người dùng - Addr: {account}</p>
           }
         </div>
         <div className={linkContainer}>
@@ -83,17 +83,17 @@ function MyApp({ Component, pageProps }) {
               Home
             </a>
           </Link>
-          <Link href="/" >
+          <Link href="/quanLyBangCap" >
             <a className={link}>
               QUẢN LÝ VĂN BẰNG, CHỨNG CHỈ
             </a>
           </Link>
-          <Link href="/" >
+          <Link href="/timKiemSinhVien" >
             <a className={link}>
               QUẢN LÝ SINH VIÊN
             </a>
           </Link>
-          <Link href="/" >
+          <Link href="/quanLyNguoiDung" >
             <a className={link}>
               QUẢN LÝ NGƯỜI DÙNG
             </a>

@@ -28,11 +28,15 @@ export default function Home(props) {
   return (
     <div>
       <div className={postList}>
-        {
           
+        {
+          (account === ownerAddress) && (
           /* map over the posts array and render a button with the post title */
+         
+         
           posts.map((post, index) => (
-            <Link href={`/post/${post[1]}`} key={index}>
+            
+            <Link href={`/user/${post[1]}`} key={index}>
               <a>
                 <div className={linkStyle}>
                   <p className={postTitle}>{post[2]}</p>
@@ -47,6 +51,7 @@ export default function Home(props) {
               </a>
             </Link>
           ))
+          )
         }
       </div>
       <div className={container}>
@@ -121,7 +126,7 @@ const linkStyle = css`
 `
 
 const postList = css`
-  width: 700px;
+  width: 500px;
   margin: 0 auto;
   padding-top: 50px;  
 `
