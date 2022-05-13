@@ -17,7 +17,7 @@ import Quanlyvanbang_smartcontract from '../artifacts/contracts/BangDaiHoc.sol/B
 export default function Home(props) {
   /* posts are fetched server side and passed in as props */
   /* see getServerSideProps */
-  const { posts } = props
+  const { totalUser, totalSV } = props
   const account = useContext(AccountContext)
 
   const router = useRouter()
@@ -26,47 +26,55 @@ export default function Home(props) {
   }
 
   return (
-    <div>
-      <div className={postList}>
-        {
+    <>
+    <h1>ỨNG DỤNG QUẢN LÝ SINH VIÊN KMA</h1>
+    <h2>Tổng số người dùng hệ thống: {totalUser}</h2>
+    <h2>Tổng số Sinh Viên: {totalSV}</h2>
+
+    </>
+  );
+  // return (
+  //   <div>
+  //     <div className={postList}>
+  //       {
           
-          /* map over the posts array and render a button with the post title */
-          posts.map((post, index) => (
-            <Link href={`/post/${post[1]}`} key={index}>
-              <a>
-                <div className={linkStyle}>
-                  <p className={postTitle}>{post[2]}</p>
-                  <div className={arrowContainer}>
-                  <img
-                      src='/right-arrow.svg'
-                      alt='Right arrow'
-                      className={smallArrow}
-                    />
-                  </div>
-                </div>
-              </a>
-            </Link>
-          ))
-        }
-      </div>
-      <div className={container}>
-        {
-          (account === ownerAddress) && posts && !posts.length && (
-            /* if the signed in user is the account owner, render a button */
-            /* to create the first post */
-            <button className={buttonStyle} onClick={navigate}>
-              Create your first post
-              <img
-                src='/right-arrow.svg'
-                alt='Right arrow'
-                className={arrow}
-              />
-            </button>
-          )
-        }
-      </div>
-    </div>
-  )
+  //         /* map over the posts array and render a button with the post title */
+  //         posts.map((post, index) => (
+  //           <Link href={`/post/${post[1]}`} key={index}>
+  //             <a>
+  //               <div className={linkStyle}>
+  //                 <p className={postTitle}>{post[2]}</p>
+  //                 <div className={arrowContainer}>
+  //                 <img
+  //                     src='/right-arrow.svg'
+  //                     alt='Right arrow'
+  //                     className={smallArrow}
+  //                   />
+  //                 </div>
+  //               </div>
+  //             </a>
+  //           </Link>
+  //         ))
+  //       }
+  //     </div>
+  //     <div className={container}>
+  //       {
+  //         (account === ownerAddress) && posts && !posts.length && (
+  //           /* if the signed in user is the account owner, render a button */
+  //           /* to create the first post */
+  //           <button className={buttonStyle} onClick={navigate}>
+  //             Create your first post
+  //             <img
+  //               src='/right-arrow.svg'
+  //               alt='Right arrow'
+  //               className={arrow}
+  //             />
+  //           </button>
+  //         )
+  //       }
+  //     </div>
+  //   </div>
+  // )
 }
 
 export async function getServerSideProps() {
@@ -89,11 +97,13 @@ export async function getServerSideProps() {
   //   }
   // }
   const contract = new ethers.Contract(contractAddress, Quanlyvanbang_smartcontract.abi, provider)
-  const data = await contract.DanhsachnguoidungHeThong();
-  console.log("\n Index:"+data);
+  const totaluser = parseInt(JSON.parse(JSON.stringify(await contract.totalUser())).hex, 16)
+  const totalSV = parseInt(JSON.parse(JSON.stringify(await contract.TotalSV())).hex, 16)
+
   return {
     props: {
-      posts: JSON.parse(JSON.stringify(data))
+      totalUser:totaluser,
+      totalSV:totalSV
     }
   }
 }

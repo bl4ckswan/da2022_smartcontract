@@ -61,10 +61,18 @@ function UserInfomation() {
     console.log(datauser)
 
   }
+  async function updateUserinfo () {
+    console.log("update userinfo")
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const signer = provider.getSigner()
+    const contract = new ethers.Contract(contractAddress, Quanlyvanbang_smartcontract.abi, signer)
+    await contract.ChinhSuaNguoiDung(datauser.address, datauser.username, datauser.isAdmin)
+    router.push(`/user/${id}`)
+  }
   
   const handleData = (e) => {
     e.preventDefault()
-    setdatauser
+
     console.log(e)
   }
   // const [dataValues, setDataValues] = useState({
@@ -95,7 +103,7 @@ function UserInfomation() {
             <Form.Group>
               <Form.Label>TÊN NGƯỜI DÙNG</Form.Label>
               <Col>
-                <Form.Control name='userName' className={inputText} type="text" value={datauser.username} />
+                <Form.Control name='userName' className={inputText} type="text" value={datauser.username} onChange={e => setdatauser({ ...datauser, username: e.target.value })} />
               </Col>
             </Form.Group>
             <Form.Group>
@@ -106,7 +114,7 @@ function UserInfomation() {
             </Form.Group>
             <Row>
               <Col>
-                <Button variant="primary" type="submit" >
+                <Button variant="primary" type="submit" onClick={updateUserinfo} >
                   Lưu thông tin
                 </Button>
               </Col>

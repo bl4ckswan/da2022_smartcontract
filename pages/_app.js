@@ -93,7 +93,7 @@ function MyApp({ Component, pageProps }) {
               QUẢN LÝ SINH VIÊN
             </a>
           </Link>
-          <Link href="/quanLyNguoiDung" >
+          <Link href="/danhsachnguoidung" >
             <a className={link}>
               QUẢN LÝ NGƯỜI DÙNG
             </a>

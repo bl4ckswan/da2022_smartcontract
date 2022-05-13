@@ -13,22 +13,22 @@ import {
 /* import Application Binary Interface (ABI) */
 import Blog from '../artifacts/contracts/Blog.sol/Blog.json'
 import Quanlyvanbang_smartcontract from '../artifacts/contracts/BangDaiHoc.sol/BangDaiHoc.json'
+import { ConstructorFragment } from 'ethers/lib/utils'
 
 export default function Home(props) {
   /* posts are fetched server side and passed in as props */
   /* see getServerSideProps */
-  const { posts } = props
+  const { posts,totaluser} = props
   const account = useContext(AccountContext)
 
   const router = useRouter()
-  async function navigate() {
-    router.push('/create-post')
-  }
 
   return (
     <div>
+      <h1>DANH SÁCH NGƯỜI DÙNG TRONG HỆ THỐNG:</h1>
+      <h1>Tổng số người dùng:{totaluser}</h1>
+
       <div className={postList}>
-          
         {
           (account === ownerAddress) && (
           /* map over the posts array and render a button with the post title */
@@ -94,11 +94,13 @@ export async function getServerSideProps() {
   //   }
   // }
   const contract = new ethers.Contract(contractAddress, Quanlyvanbang_smartcontract.abi, provider)
+  const totaluser = parseInt(JSON.parse(JSON.stringify(await contract.totalUser())).hex, 16)
   const data = await contract.DanhsachnguoidungHeThong();
-  console.log("\n Index:"+data);
+  console.log("\n Index:"+data,totaluser);
   return {
     props: {
-      posts: JSON.parse(JSON.stringify(data))
+      posts: JSON.parse(JSON.stringify(data)),
+      totaluser:totaluser
     }
   }
 }
@@ -111,7 +113,7 @@ const arrowContainer = css`
 `
 
 const postTitle = css`
-  font-size: 30px;
+  font-size: 20px;
   font-weight: bold;
   cursor: pointer;
   margin: 0;

@@ -6,10 +6,13 @@ import {
   FormControl,
   Table,
 } from "react-bootstrap";
+import { useState, useRef, useEffect } from 'react' // new
+
 import "easymde/dist/easymde.min.css";
 import { css } from "@emotion/css";
 import { ethers } from 'ethers'
 import { create } from 'ipfs-http-client'
+import { useRouter } from 'next/router'
 
 /* import contract address and contract owner address */
 import {
@@ -18,13 +21,37 @@ import {
 
 import Quanlyvanbang_smartcontract from '../artifacts/contracts/BangDaiHoc.sol/BangDaiHoc.json'
 export default function findStudentById() {
-  async function Getinfo(){
-    if (typeof window.ethereum !== 'undefined') {
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const contract = new ethers.Contract(contractAddress, Quanlyvanbang_smartcontract.abi, provider)
-      const data = await contract.DanhsachnguoidungHeThong();
-      console.log("\n timkiemsinhvien:"+data);
-    }    
+  // const [datauser, setdatauser] = useState({"address":"","username":"","isAdmin":false})
+  const router = useRouter()
+  const { id } = router.query
+  if (router.isFallback) {
+    return <div>Loading...</div>
+  } 
+  useEffect(() => {
+    GetSVinfo()
+  }, [id])
+  async function GetSVinfo() {
+    /* we first fetch the individual post by ipfs hash from the network */
+    if (!id) return
+    let provider
+    if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'local') {
+      provider = new ethers.providers.JsonRpcProvider()
+    } else if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'testnet') {
+      provider = new ethers.providers.JsonRpcProvider('https://rpc-mumbai.matic.today')
+    } else {
+      provider = new ethers.providers.JsonRpcProvider('https://polygon-rpc.com/')
+    }
+    const contract = new ethers.Contract(contractAddress, Quanlyvanbang_smartcontract.abi, provider)
+    const val = await contract.DanhsachnguoidungHeThong()
+    console.log("Lay thong tin nguoi dung:",val);
+    // const data={"address":"","username":"","isAdmin":false}
+    // data.address = val[0]
+    // data.username = val[1]
+    // data.isAdmin = val[2]
+    // console.log(data)
+    // setdatauser(data)
+
+
   }
   return (
     <>
@@ -33,7 +60,7 @@ export default function findStudentById() {
           <InputGroup>
             <InputGroup.Text>Mã Sinh Viên</InputGroup.Text>
             <FormControl />
-            <button onClick={Getinfo}> TÌM KIẾM</button>
+            <button onClick={GetSVinfo}> TÌM KIẾM</button>
           </InputGroup>
         </Row>
         <Row className={contentForm}>
