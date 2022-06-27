@@ -12,41 +12,26 @@ contract BangDaiHoc is Ownable {
         uint id;
         address DiaChi;
         string Ten;
-        bool Admin;
+        string hashinfo;
+        uint Role; // 0 is admin / 1 is quan ly sinh vien / 2 is quan ly van bang / 3 nguoi dung 
     } 
     mapping (address => NguoiDung) _tblNguoiDung;
 
     //liet ke tai khoan tren he thong
     uint public totalUser = 1;
     mapping (uint => address) _dsAddressHeThong;
-    // Map IDs with Approvers address
-    mapping (address => bool) private _approvers;
-
-    // Create onlyApprover modifier
-    modifier onlyApprover() {
-        require(_approvers[_msgSender()] == true || _msgSender() == owner(), "Caller is not the Approver");
-        _;
-    }
-
-    // Set Approver
-    function setApprovers(address approverAddress) public onlyOwner {
-        _approvers[approverAddress] = true;
-    }
-
-    // Remove Approver
-    function removeApprovers(address approverAddress) public onlyOwner {
-        _approvers[approverAddress] = false;
-    }
-
-    function isApprover(address addressToCheck) public view returns(bool){
-        return _approvers[addressToCheck];
-    }
     
+
     //constructor:
     // Khoi tao nguoi dung Owner Smartcontract lam Admin. Dung dau danh sach
     constructor () public {
-        _tblNguoiDung [msg.sender] = NguoiDung(0,msg.sender, "SUPERADMIN", true);
+        _tblNguoiDung [msg.sender] = NguoiDung(0,msg.sender, "SUPERADMIN","", 777);
+      
         _dsAddressHeThong [0] = msg.sender;
+      
+
+
+
 
     }
 
@@ -67,9 +52,9 @@ contract BangDaiHoc is Ownable {
     }
 
     //Hàm thêm người dùng:
-    function ThemNguoiDung (address diaChi,string memory ten) public {
+    function ThemNguoiDung (address diaChi,string memory ten, string memory hashinfo) public {
         //Kiểm tra là admin:
-        require (_tblNguoiDung[msg.sender].Admin);
+        require (_tblNguoiDung[msg.sender].Role == 777);
         //Kiểm tra tồn tại người dùng:
         require (!NguoiDungTonTai(diaChi));
         //Thêm người dùng:
@@ -77,28 +62,29 @@ contract BangDaiHoc is Ownable {
 
         // Tang bo dem
         // Thuc hien them nguoi vao he thong
-        _tblNguoiDung [diaChi] = NguoiDung (totalUser,diaChi, ten, false);
+        _tblNguoiDung [diaChi] = NguoiDung (totalUser,diaChi, ten,hashinfo, 3); // mặc định là người dùng bình thường
         _dsAddressHeThong[totalUser] = diaChi;
         totalUser += 1;
 
     }
 
     //Hàm chỉnh sửa người dùng:
-    function ChinhSuaNguoiDung (address diaChi, string memory ten, bool admin) public {
+    function ChinhSuaNguoiDung (address diaChi, string memory ten, string memory hashinfo, uint Role) public {
         //Kiểm tra admin:
-        require (_tblNguoiDung [msg.sender].Admin);
+        require (_tblNguoiDung [msg.sender].Role == 777);
         //Kiểm tra tài khoản chỉnh sửa tồn tại:
         require (NguoiDungTonTai (diaChi));
         //Tên không được để trống:
         require (!ChuoiRong (ten));
         _tblNguoiDung [diaChi].Ten = ten;
-        _tblNguoiDung [diaChi].Admin = admin;
+        _tblNguoiDung [diaChi].Role = Role;
+        _tblNguoiDung [diaChi].hashinfo = hashinfo;
     }
 
     //Hàm tìm người dùng:
-    function TimNguoiDung (address diaChi) public view returns (address diachi, string memory ten, bool ketqua) {
+    function TimNguoiDung (address diaChi) public view returns (address diachi, string memory ten,string memory hashinfo, uint role) {
         NguoiDung memory ketQua = _tblNguoiDung [diaChi];
-        return (ketQua.DiaChi,ketQua.Ten, ketQua.Admin);
+        return (ketQua.DiaChi,ketQua.Ten, ketQua.hashinfo, ketQua.Role);
     }
 
     //Danh sach nguoi dung
@@ -122,10 +108,13 @@ contract BangDaiHoc is Ownable {
         string NoiSinh;
         string DanToc;
         string QuocTich;
-        string Lop;
+        string Lop; 
+        string Hashinfo; // chứa link ảnh
+        address Owneraddr; // địa chỉ ví 
+        uint Secretkey; // key de doc
     }
     mapping (string => SinhVien) tblSinhVien;
-    uint public TotalSV = 0;
+    uint public totalSV = 0;
     mapping (uint => string) dsSinhVien;
 
     //Hàm kiểm tra sinh viên tồn tại:
@@ -144,12 +133,17 @@ contract BangDaiHoc is Ownable {
         string memory noiSinh,
         string memory danToc,
         string memory quocTich,
-        string memory lop
-    ) public onlyApprover {
+        string memory lop,
+        string memory hashinfo,
+        address owneraddr,
+        uint secretkey
+    ) public {
         //Kiểm tra sinh viên đã có chưa:
         require (!SinhVienTonTai (maSV));
         //Kiểm tra người nhập đã đăng ký:
         require (NguoiDungTonTai (msg.sender));
+        require (_tblNguoiDung [msg.sender].Role == 1 || _tblNguoiDung [msg.sender].Role == 777);
+
         tblSinhVien [maSV] = SinhVien (
             maSV, 
             tenSV,
@@ -158,10 +152,14 @@ contract BangDaiHoc is Ownable {
             noiSinh, 
             danToc, 
             quocTich, 
-            lop);
+            lop,
+            hashinfo,
+            owneraddr,
+            secretkey
+            );
         //Sinh vien tinh từ 1        
-        dsSinhVien[TotalSV] = maSV;
-        TotalSV += 1;
+        dsSinhVien[totalSV] = maSV;
+        totalSV += 1;
         
     }
 
@@ -174,12 +172,17 @@ contract BangDaiHoc is Ownable {
         string memory noiSinh,
         string memory danToc,
         string memory quocTich,
-        string memory lop
-    ) public onlyApprover {
+        string memory lop,
+        string memory hashinfo,
+        address owneraddr,
+        uint secretkey
+    ) public {
     //Kiểm tra sinh viên đã có chưa:
     require (SinhVienTonTai (maSV));
     //Kiểm tra người nhập đã đăng ký:
     require (NguoiDungTonTai (msg.sender));
+    require (_tblNguoiDung [msg.sender].Role == 1 || _tblNguoiDung [msg.sender].Role == 777);
+
     tblSinhVien [maSV].TenSV = tenSV;
     tblSinhVien [maSV].NgaySinh = ngaySinh;
     tblSinhVien [maSV].GioiTinh = gioiTinh;
@@ -187,6 +190,9 @@ contract BangDaiHoc is Ownable {
     tblSinhVien [maSV].DanToc = danToc;
     tblSinhVien [maSV].QuocTich = quocTich;
     tblSinhVien [maSV].Lop = lop;
+    tblSinhVien [maSV].Hashinfo = hashinfo;
+    tblSinhVien [maSV].Owneraddr = owneraddr;
+    tblSinhVien [maSV].Secretkey = secretkey;
     }
 
     //Hàm tìm sinh viên:
@@ -194,157 +200,257 @@ contract BangDaiHoc is Ownable {
         string memory MaSV,
         string memory TenSV,
         string memory NgaySinh,
-        string memory GioiTinh
+        string memory GioiTinh,
+        string memory NoiSinh,
+        string memory DanToc,
+        string memory QuocTich,
+        string memory Lop,
+        string memory Hashinfo,
+        address Owneraddr,
+        uint Secretkey
     ) {
+    
+    require (_tblNguoiDung [msg.sender].Role == 1 || _tblNguoiDung [msg.sender].Role == 777);
     SinhVien memory ketQua = tblSinhVien [_masv];
     return (
         ketQua.MaSV,
         ketQua.TenSV,
         ketQua.NgaySinh,
-        ketQua.GioiTinh
+        ketQua.GioiTinh,
+        ketQua.NoiSinh,
+        ketQua.DanToc,
+        ketQua.QuocTich,
+        ketQua.Lop,
+        ketQua.Hashinfo,
+        ketQua.Owneraddr,
+        ketQua.Secretkey      
     );
     }
+    
 
-    //Hàm tìm sinh viên chi tiết:
-    function ChiTietSinhVien (string memory _masv) public returns (
+    //Hàm tìm sinh viên chi tiết voi secret key
+    function TimSinhVien_withsecret (string memory _masv, uint secret) public view returns (
+        string memory MaSV,
+        string memory TenSV,
+        string memory NgaySinh,
+        string memory GioiTinh,
         string memory NoiSinh,
         string memory DanToc,
         string memory QuocTich,
-        string memory Lop
+        string memory Lop,
+        string memory Hashinfo,
+        address Owneraddr,
+        uint Secretkey
     ) {
-        SinhVien storage ketQua = tblSinhVien [_masv];
-        return (
-            ketQua.NoiSinh,
-            ketQua.DanToc,
-            ketQua.QuocTich,
-            ketQua.Lop
-        );
+    
+    require (tblSinhVien [_masv].Secretkey == secret );
+
+    SinhVien memory ketQua = tblSinhVien [_masv];
+    return (
+        ketQua.MaSV,
+        ketQua.TenSV,
+        ketQua.NgaySinh,
+        ketQua.GioiTinh,
+        ketQua.NoiSinh,
+        ketQua.DanToc,
+        ketQua.QuocTich,
+        ketQua.Lop,
+        ketQua.Hashinfo,
+        ketQua.Owneraddr,
+        ketQua.Secretkey      
+    );
+    }
+
+    // ham thiet lap secret
+    function Setsecretkey_qlsv(string memory _masv, uint secret) public returns (bool) {
+        require (_tblNguoiDung [msg.sender].Role == 1 || _tblNguoiDung [msg.sender].Role == 777 || tblSinhVien [_masv].Owneraddr == msg.sender );
+        tblSinhVien [_masv].Secretkey = secret;
+        return true;
     }
     function Danhsachsinhvien() public view returns (SinhVien[] memory){
-        require(TotalSV != 0);
-        SinhVien[] memory dsSinhvien = new SinhVien[](TotalSV);
-        for (uint i = 0; i < TotalSV; i++){
+        require (_tblNguoiDung [msg.sender].Role == 1 || _tblNguoiDung [msg.sender].Role == 777);
+        require(totalSV != 0);
+        SinhVien[] memory dsSinhvien = new SinhVien[](totalSV);
+        for (uint i = 0; i < totalSV; i++){
             SinhVien storage currentItem = tblSinhVien[dsSinhVien[i]];
             dsSinhvien[i] = currentItem;
         }
         return dsSinhvien;
     }
 
-    // //Cau truc cua doi tuong bang cap:
-    // struct Bang {
-    //     string MaSV;
-    //     string SoHieu;
-    //     string TenSV;
-    //     string NgaySinh;
-    //     string NamTotNghiep;
-    //     string XepLoai;
-    //     string HinhThuDaoTao;
-    //     string NgayCap;
-    //     string SoVaoSo;
-    //     uint BlockNumber;
-    // }
+    //Cau truc cua doi tuong bang cap:
+    struct Bang {
+        string MaSV;
+        string SoHieu;
+        // string TenSV; lấy từ dữ liệu sinh viên
+        // string NgaySinh;
+        string NamTotNghiep;
+        string XepLoai;
+        string HinhThuDaoTao;
+        string NgayCap;
+        string SoVaoSo;
+        string hashpoint; // điểm của sinh viên trong trường
+        address owneraddress; // địa chỉ ví của sinh viên
+        uint secretkey; // mã số bí mật để truy cập
+    }
 
-    // //So lan chinh sua bang:
-    //     struct LanChinhSuaBang {
-    //     uint SoLan;
-    // }
+    
 
-    // //Index bang:
-    // uint index = 0;
-    // mapping (string => LanChinhSuaBang) tblLanChinhSuaBang;
-    // mapping (string => mapping (uint => Bang)) tblBang;
-    // mapping (uint => string) public tblThuTu; 
+    //Index bang:
+    uint public totalBang = 0;
+    mapping (string => uint) tblLanChinhSuaBang;
+    mapping (string => Bang) tblBang;
+    mapping (uint => string) public tblThuTu; 
 
-    // //Thêm bằng cấp:
-    // function ThemBang (
-    //     string memory maSV,
-    //     string memory soHieu,
-    //     string memory tenSV,
-    //     string memory ngaySinh,
-    //     string memory namTotNghiep,
-    //     string memory xepLoai,
-    //     string memory hinhThucDaoTao,
-    //     string memory ngayCap,
-    //     string memory soVaoSo
-    // ) public {
-    //     //Kiểm tra sinh viên tồn tại:
-    //     require (SinhVienTonTai (maSV));
-    //     //Kiểm tra người nhập đã đăng ký:
-    //     require (NguoiDungTonTai (msg.sender));
-    //     //Nhap thong tin bang cap:
-    //     tblBang [maSV][tblLanChinhSuaBang
-    //     [maSV].SoLan++] = Bang (
-    //         maSV,
-    //         soHieu,
-    //         tenSV,
-    //         ngaySinh,
-    //         namTotNghiep,
-    //         xepLoai,
-    //         hinhThucDaoTao,
-    //         ngayCap,
-    //         soVaoSo,
-    //         block.number
-    //     );
-    //     tblThuTu [index] = maSV;
-    //     index++;
-    // }
+    //Thêm bằng cấp:
+    function ThemBang (
+        string memory maSV,
+        string memory SoHieu,
+        string memory namTotNghiep,
+        string memory xepLoai,
+        string memory hinhThucDaoTao,
+        string memory ngayCap,
+        string memory soVaoSo,
+        string memory hashpoint,
+        address owneraddress,
+        uint secretkey
+    ) public {
+        //Kiểm tra sinh viên tồn tại:
+        require (SinhVienTonTai (maSV));
+        //Kiểm tra người nhập đã đăng ký:
+        require (NguoiDungTonTai (msg.sender));
 
-    // //Xuat thong tin 1 bang dua tren ma sinh vien:
-    // function TimBang (string memory maTimKiem, uint soLan) public returns (
-    //     string memory MaSV,
-    //     string memory SoHieu,
-    //     string memory TenSV,
-    //     string memory NgaySinh
-    // ) {
-    //     Bang storage ketQua = tblBang [maTimKiem][soLan];
-    //     return (
-    //         ketQua.MaSV,
-    //         ketQua.SoHieu,
-    //         ketQua.TenSV,
-    //         ketQua.NgaySinh
-    //     );
-    // }
+        //kiểm tra quyền người dùng
+        require (_tblNguoiDung [msg.sender].Role == 2 || _tblNguoiDung [msg.sender].Role == 777);
 
-    // function ChiTietBang (string memory maTimKiem, uint soLan) public returns (
-    //     string memory NamTotNghiep,
-    //     string memory XepLoai,
-    //     string memory HinhThuDaoTao,
-    //     string memory NgayCap,
-    //     string memory SoVaoSo,
-    //     uint BlockNumber
-    // ) {
-    // Bang storage ketQua = tblBang [maTimKiem][soLan];
-    // return (
-    //     ketQua.NamTotNghiep,
-    //     ketQua.XepLoai,
-    //     ketQua.HinhThuDaoTao,
-    //     ketQua.NgayCap,
-    //     ketQua.SoVaoSo,
-    //     ketQua.BlockNumber
-    //     );
-    // }
+        //Nhap thong tin bang cap:
+        tblBang [SoHieu] = Bang (
+            maSV,
+            SoHieu,
+            namTotNghiep,
+            xepLoai,
+            hinhThucDaoTao,
+            ngayCap,
+            soVaoSo,
+            hashpoint,
+            owneraddress,
+            secretkey
+        );
+        tblThuTu [totalBang] = maSV;
+        totalBang++;
+    }
 
-    // //Ham so sanh hai chuoi bang nhau:
-    // function ChuoiBangNhau (string memory chuoi1, string memory chuoi2) pure private returns (bool) {
-    //     bytes memory _chuoi1 = bytes (chuoi1);
-    //     bytes memory _chuoi2 = bytes (chuoi2);
-    //     return keccak256 (_chuoi1) == keccak256
-    //     (_chuoi2);
-    // }
+    function BangTonTai (string memory SoHieu) private returns (bool) {
+        if(!ChuoiRong (tblBang[SoHieu].MaSV))
+            return true;
+        return false;
+    }
+    //Thêm bằng cấp:
+    function ChinhsuaBang (
+        string memory maSV,
+        string memory SoHieu,
+        string memory namTotNghiep,
+        string memory xepLoai,
+        string memory hinhThucDaoTao,
+        string memory ngayCap,
+        string memory soVaoSo,
+        string memory hashpoint,
+        address owneraddress,
+        uint secretkey
+    ) public {
+        //Kiểm tra sinh viên tồn tại:
+        require (BangTonTai(SoHieu));
+        //Kiểm tra người nhập đã đăng ký:
+        require (NguoiDungTonTai (msg.sender));
 
-    // //Kiem tra mot so hieu bang co ton tai khong:
-    // function TimBangSoHieu (string memory maTimKiem) public returns (string memory MaSV) {
-    //     uint i = index;
-    //     while (index >= 0) {
-    //         if (ChuoiBangNhau (tblBang [tblThuTu[i]] [tblLanChinhSuaBang[tblThuTu[i]].SoLan-1].SoHieu, maTimKiem)) {
-    //             return tblBang [tblThuTu[i]][tblLanChinhSuaBang[tblThuTu[i]].SoLan-1].MaSV;
-    //         }
-    //         i--;
-    //     }
-    // }
+        //kiểm tra quyền người dùng
+        require (_tblNguoiDung [msg.sender].Role == 2 || _tblNguoiDung [msg.sender].Role == 777);
 
-    // //Xuat so lan chinh sua cua 1 bang cap:
-    // function TimSoLan (string memory _index) public returns (uint soLan) {
-    //     return tblLanChinhSuaBang [_index].SoLan;
-    // }
+        //Nhap thong tin bang cap:
+        tblBang [SoHieu].NamTotNghiep = namTotNghiep;
+        tblBang [SoHieu].XepLoai = xepLoai;
+        tblBang [SoHieu].HinhThuDaoTao = hinhThucDaoTao;
+        tblBang [SoHieu].NgayCap = ngayCap;
+        tblBang [SoHieu].SoVaoSo = soVaoSo;
+        tblBang [SoHieu].hashpoint = hashpoint;
+        tblBang [SoHieu].owneraddress = owneraddress;
+        tblBang [SoHieu].secretkey = secretkey;
+    }
+
+
+    
+    function TimBang (string memory _SoHieu) public view returns (
+        string memory maSV,
+        string memory sohieu,
+        string memory namTotNghiep,
+        string memory xepLoai,
+        string memory hinhThucDaoTao,
+        string memory ngayCap,
+        string memory soVaoSo,
+        string memory hashpoint,
+        string memory ten, 
+        string memory ngaysinh
+    ) {  
+        
+        // Kiem tra role nguoi dung
+        require (_tblNguoiDung [msg.sender].Role == 2 || _tblNguoiDung [msg.sender].Role == 777);
+
+       
+        // lay thong tin ve bang
+        Bang memory kqBang = tblBang[_SoHieu];
+        SinhVien memory ketQua = tblSinhVien [kqBang.MaSV];
+    return (
+        kqBang.MaSV,
+        kqBang.SoHieu,
+        kqBang.NamTotNghiep,
+        kqBang.XepLoai,
+        kqBang.HinhThuDaoTao,
+        kqBang.NgayCap,
+        kqBang.SoVaoSo,
+        kqBang.hashpoint,
+        ketQua.TenSV,
+        ketQua.NgaySinh
+    );
+    }
+
+    function TimBang_withsecretkey (string memory _SoHieu, uint secretkey) public view returns (
+        string memory maSV,
+        string memory sohieu,
+        string memory namTotNghiep,
+        string memory xepLoai,
+        string memory hinhThucDaoTao,
+        string memory ngayCap,
+        string memory soVaoSo,
+        string memory hashpoint,
+        string memory ten, 
+        string memory ngaysinh
+    ) {  
+        
+        // Kiem tra role nguoi dung
+        require (tblBang[_SoHieu].secretkey == secretkey);
+
+       
+        // lay thong tin ve bang
+        Bang memory kqBang = tblBang[_SoHieu];
+        SinhVien memory ketQua = tblSinhVien [kqBang.MaSV];
+    return (
+        kqBang.MaSV,
+        kqBang.SoHieu,
+        kqBang.NamTotNghiep,
+        kqBang.XepLoai,
+        kqBang.HinhThuDaoTao,
+        kqBang.NgayCap,
+        kqBang.SoVaoSo,
+        kqBang.hashpoint,
+        ketQua.TenSV,
+        ketQua.NgaySinh
+    );
+    }
+     // ham thiet lap secret
+    function Setsecretkey_qlvb(string memory _sohieu, uint secret) public returns(bool)  {
+        require (_tblNguoiDung [msg.sender].Role == 2 || _tblNguoiDung [msg.sender].Role == 777 || tblBang [_sohieu].owneraddress == msg.sender );
+        tblBang [_sohieu].secretkey = secret;
+        return true;
+    }
+  
 }
